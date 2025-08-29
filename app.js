@@ -1,4 +1,5 @@
-// JavaScript logic, now with localStorage persistence!
+// Tire Inventory Management App - with admin password protection for adding tires
+
 const pageAccessPassword = "RT9k#mP2$vL8@qX3";
 let isPageUnlocked = false;
 let isAdminLoggedIn = false;
@@ -65,8 +66,7 @@ function saveTires(tires) {
 
 let allTires = getStoredTires() || [...originalTires, ...newTires];
 
-// --- All other functions from your script, but update allTires with saveTires(allTires) after any add/delete
-
+// Password gate for viewing inventory
 function checkPageAccess() {
     const enteredPassword = document.getElementById('pagePassword').value;
     const errorDiv = document.getElementById('loginError');
@@ -91,48 +91,58 @@ function handlePasswordKeypress(event) {
     }
 }
 
+// Initialize dropdown options
 function initializeDropdowns() {
-    // ... unchanged ...
-    // fill dropdowns
+    // Width dropdown
     const widthSelect = document.getElementById('tireWidth');
-    commonWidths.forEach(width => {
-        const option = document.createElement('option');
-        option.value = width;
-        option.textContent = width + ' mm';
-        widthSelect.appendChild(option);
-    });
-
+    if (widthSelect.children.length <= 2) {
+        commonWidths.forEach(width => {
+            const option = document.createElement('option');
+            option.value = width;
+            option.textContent = width + ' mm';
+            widthSelect.appendChild(option);
+        });
+    }
+    // Aspect Ratio dropdown
     const aspectRatioSelect = document.getElementById('tireAspectRatio');
-    commonAspectRatios.forEach(ratio => {
-        const option = document.createElement('option');
-        option.value = ratio;
-        option.textContent = ratio + '%';
-        aspectRatioSelect.appendChild(option);
-    });
-
+    if (aspectRatioSelect.children.length <= 2) {
+        commonAspectRatios.forEach(ratio => {
+            const option = document.createElement('option');
+            option.value = ratio;
+            option.textContent = ratio + '%';
+            aspectRatioSelect.appendChild(option);
+        });
+    }
+    // Diameter dropdown
     const diameterSelect = document.getElementById('tireDiameter');
-    commonDiameters.forEach(diameter => {
-        const option = document.createElement('option');
-        option.value = diameter;
-        option.textContent = diameter + '"';
-        diameterSelect.appendChild(option);
-    });
-
+    if (diameterSelect.children.length <= 2) {
+        commonDiameters.forEach(diameter => {
+            const option = document.createElement('option');
+            option.value = diameter;
+            option.textContent = diameter + '"';
+            diameterSelect.appendChild(option);
+        });
+    }
+    // Brand dropdown
     const brandSelect = document.getElementById('tireBrand');
-    topBrands.forEach(brand => {
-        const option = document.createElement('option');
-        option.value = brand.toUpperCase();
-        option.textContent = brand;
-        brandSelect.appendChild(option);
-    });
-
+    if (brandSelect.children.length <= 2) {
+        topBrands.forEach(brand => {
+            const option = document.createElement('option');
+            option.value = brand.toUpperCase();
+            option.textContent = brand;
+            brandSelect.appendChild(option);
+        });
+    }
+    // Model dropdown
     const modelSelect = document.getElementById('tireModel');
-    commonModels.forEach(model => {
-        const option = document.createElement('option');
-        option.value = model.toUpperCase();
-        option.textContent = model;
-        modelSelect.appendChild(option);
-    });
+    if (modelSelect.children.length <= 2) {
+        commonModels.forEach(model => {
+            const option = document.createElement('option');
+            option.value = model.toUpperCase();
+            option.textContent = model;
+            modelSelect.appendChild(option);
+        });
+    }
 }
 
 function handleCustomSelection(field) {
@@ -178,9 +188,114 @@ function updateStats() {
     document.getElementById('newTires').textContent = allTires.filter(t => t.isNew).length;
 }
 
-// ... Rest of your functions (handleSearch, showSuggestions, etc.) unchanged, except use saveTires(allTires) after any array mutation ...
+// Search & Suggestions
+function handleSearch() {
+    filterTires();
+    hideSuggestions();
+}
+
+function filterTires() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const tbody = document.getElementById('tireTableBody');
+    const rows = tbody.getElementsByTagName('tr');
+    let visibleCount = 0;
+    Array.from(rows).forEach(row => {
+        const text = row.textContent.toLowerCase();
+        if (text.includes(searchTerm)) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+    document.getElementById('totalCount').textContent = visibleCount;
+}
+
+function showSuggestions() {
+    const searchInput = document.getElementById('searchInput');
+    const searchTerm = searchInput.value.toLowerCase();
+    const suggestionsDiv = document.getElementById('searchSuggestions');
+    if (searchTerm.length < 2) {
+        hideSuggestions();
+        return;
+    }
+    const suggestions = new Set();
+    allTires.forEach(tire => {
+        const tireString = `${tire.width}/${tire.height}R${tire.diameter} ${tire.brand} ${tire.style}`;
+        if (tire.brand.toLowerCase().includes(searchTerm)) {
+            suggestions.add(tire.brand);
+        }
+        if (tire.style.toLowerCase().includes(searchTerm)) {
+            suggestions.add(tire.style);
+        }
+        if (tire.width.toString().includes(searchTerm)) {
+            suggestions.add(`${tire.width}mm width`);
+        }
+        if (tireString.toLowerCase().includes(searchTerm)) {
+            suggestions.add(tireString);
+        }
+    });
+    const suggestionsArray = Array.from(suggestions).slice(0, 8);
+    if (suggestionsArray.length > 0) {
+        suggestionsDiv.innerHTML = suggestionsArray.map(suggestion => 
+            `<div class="suggestion-item" onclick="selectSuggestion('${suggestion.replace(/'/g, "\\'")}')">${suggestion}</div>`
+        ).join('');
+        suggestionsDiv.style.display = 'block';
+    } else {
+        hideSuggestions();
+    }
+}
+
+function selectSuggestion(suggestion) {
+    document.getElementById('searchInput').value = suggestion;
+    hideSuggestions();
+    filterTires();
+}
+
+function hideSuggestions() {
+    document.getElementById('searchSuggestions').style.display = 'none';
+}
+
+document.addEventListener('click', function(event) {
+    const searchContainer = document.querySelector('.search-container');
+    if (!searchContainer.contains(event.target)) {
+        hideSuggestions();
+    }
+});
+
+// Modal controls
+function openAddTireModal() {
+    document.getElementById('addTireModal').style.display = 'block';
+}
+function closeAddTireModal() {
+    document.getElementById('addTireModal').style.display = 'none';
+    resetForm();
+}
+function resetForm() {
+    document.getElementById('addTireForm').reset();
+    document.querySelectorAll('.custom-input').forEach(input => {
+        input.classList.remove('show');
+    });
+}
+
+// Access control for adding tires (admin only)
+function checkAdminAccess(action) {
+    if (!isAdminLoggedIn) {
+        alert('Admin access required');
+        return;
+    }
+    if (action === 'add') {
+        openAddTireModal();
+    }
+}
 
 function addNewTire() {
+    // Protect this function so only admin can add
+    if (!isAdminLoggedIn) {
+        alert('Admin access required to add tires.');
+        closeAddTireModal();
+        return;
+    }
     const widthSelect = document.getElementById('tireWidth');
     const aspectRatioSelect = document.getElementById('tireAspectRatio');
     const diameterSelect = document.getElementById('tireDiameter');
@@ -216,6 +331,10 @@ function addNewTire() {
 }
 
 function deleteTire(index) {
+    if (!isAdminLoggedIn) {
+        alert('Admin access required to delete tires.');
+        return;
+    }
     if (confirm('Are you sure you want to delete this tire?')) {
         allTires.splice(index, 1);
         saveTires(allTires);
@@ -224,10 +343,64 @@ function deleteTire(index) {
     }
 }
 
-// ... rest unchanged ...
+// Admin login/logout UI and functionality
+function toggleAdminMode() {
+    if (isAdminLoggedIn) {
+        // Logout
+        isAdminLoggedIn = false;
+        document.querySelector('.controls button[onclick="toggleAdminMode()"]').innerHTML = '🔒 Admin Login';
+        document.getElementById('addTireBtn').style.display = 'none';
+        populateTable();
+        alert('Logged out successfully');
+    } else {
+        // Login
+        const password = prompt('Enter admin password:');
+        if (password === adminPassword) {
+            isAdminLoggedIn = true;
+            document.querySelector('.controls button[onclick="toggleAdminMode()"]').innerHTML = '🔓 Admin Logout';
+            document.getElementById('addTireBtn').style.display = 'inline-block';
+            populateTable();
+            alert('Admin access granted');
+        } else if (password !== null) {
+            alert('Incorrect password');
+        }
+    }
+}
+
+// Export functions
+function exportToCSV() {
+    let csvContent = "Width,Aspect Ratio,Rim Diameter,Brand,Model\n";
+    allTires.forEach(tire => {
+        csvContent += `${tire.width},${tire.height},${tire.diameter},"${tire.brand}","${tire.style}"\n`;
+    });
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'tire_inventory.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
+
+function copyGoogleSheetsData() {
+    let sheetsData = "Width\tAspect Ratio\tRim Diameter\tBrand\tModel\n";
+    allTires.forEach(tire => {
+        sheetsData += `${tire.width}\t${tire.height}\t${tire.diameter}\t${tire.brand}\t${tire.style}\n`;
+    });
+    navigator.clipboard.writeText(sheetsData).then(() => {
+        alert('Data copied! You can now paste it directly into Google Sheets.');
+    }).catch(err => {
+        console.error('Failed to copy: ', err);
+        alert('Failed to copy data. Please try the CSV export instead.');
+    });
+}
+
+// Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('pagePassword').focus();
 });
+
+// Close modal when clicking outside of it
 window.onclick = function(event) {
     const modal = document.getElementById('addTireModal');
     if (event.target === modal) closeAddTireModal();
