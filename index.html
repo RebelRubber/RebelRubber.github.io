@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tire Inventory Management</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="loginOverlay" class="login-overlay">
+        <div class="login-box">
+            <img src="icon.png" alt="Rubber Rebels Logo" class="login-logo">
+            <h2>Please enter password to proceed to inventory.</h2>
+            <input type="password" id="pagePassword" class="login-input" placeholder="Enter password" onkeypress="handlePasswordKeypress(event)">
+            <button class="login-btn" onclick="checkPageAccess()">Access</button>
+            <div id="loginError" class="error-message" style="display: none;"></div>
+        </div>
+    </div>
+
+    <div id="protectedContent" class="protected-content" style="display:none;">
+        <div class="header">
+            <div class="header-content">
+                <img src="icon.png" alt="Rubber Rebels Logo" class="header-logo">
+                <div class="header-text">
+                    <h1>Яubber Rebels</h1>
+                    <p>Tire Inventory List</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="btn btn-add" onclick="checkAdminAccess('add')" id="addTireBtn" style="display: none;">+ Add New Tire</button>
+            <button class="btn" onclick="toggleAdminMode()">🔒 Admin Login</button>
+            <button class="btn btn-success" onclick="exportToCSV()">📊 Export to CSV</button>
+            <button class="btn" onclick="copyGoogleSheetsData()">📋 Copy for Google Sheets</button>
+            <div class="search-container">
+                <input type="text" class="search-box" placeholder="Search tires..." id="searchInput" onkeyup="handleSearch()" oninput="showSuggestions()">
+                <div id="searchSuggestions" class="search-suggestions"></div>
+            </div>
+            <span style="margin-left: auto; color: #7f8c8d; font-size: 14px;">
+                Total: <strong id="totalCount">0</strong> tires
+            </span>
+        </div>
+        
+        <div class="table-container">
+            <table id="tireTable">
+                <thead>
+                    <tr>
+                        <th>Width</th>
+                        <th>Aspect Ratio</th>
+                        <th>Rim Diameter</th>
+                        <th>Brand</th>
+                        <th>Model</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="tireTableBody">
+                    <!-- Data will be populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-number" id="totalTires">0</div>
+                <div class="stat-label">Total Tires</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="totalBrands">0</div>
+                <div class="stat-label">Brands</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="newTires">6</div>
+                <div class="stat-label">New Added</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Tire Modal -->
+    <div id="addTireModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAddTireModal()">&times;</span>
+            <h2>Add New Tire</h2>
+            <form id="addTireForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="tireWidth">Width (mm)</label>
+                        <select id="tireWidth" onchange="handleCustomSelection('width')">
+                            <option value="">Select Width</option>
+                            <option value="other">Other (Custom)</option>
+                        </select>
+                        <input type="number" id="customWidth" class="custom-input" placeholder="Enter custom width" min="100" max="400">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tireAspectRatio">Aspect Ratio (%)</label>
+                        <select id="tireAspectRatio" onchange="handleCustomSelection('aspectRatio')">
+                            <option value="">Select Aspect Ratio</option>
+                            <option value="other">Other (Custom)</option>
+                        </select>
+                        <input type="number" id="customAspectRatio" class="custom-input" placeholder="Enter custom aspect ratio" min="25" max="95">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tireDiameter">Rim Diameter (inches)</label>
+                        <select id="tireDiameter" onchange="handleCustomSelection('diameter')">
+                            <option value="">Select Diameter</option>
+                            <option value="other">Other (Custom)</option>
+                        </select>
+                        <input type="number" id="customDiameter" class="custom-input" placeholder="Enter custom diameter" min="12" max="26">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="tireBrand">Brand</label>
+                    <select id="tireBrand" onchange="handleCustomSelection('brand')">
+                        <option value="">Select Brand</option>
+                        <option value="other">Other (Custom)</option>
+                    </select>
+                    <input type="text" id="customBrand" class="custom-input" placeholder="Enter custom brand">
+                </div>
+                
+                <div class="form-group">
+                    <label for="tireModel">Model</label>
+                    <select id="tireModel" onchange="handleCustomSelection('model')">
+                        <option value="">Select Model</option>
+                        <option value="other">Other (Custom)</option>
+                    </select>
+                    <input type="text" id="customModel" class="custom-input" placeholder="Enter custom model">
+                </div>
+                
+                <div style="text-align: center; margin-top: 30px;">
+                    <button type="button" class="btn btn-success" onclick="addNewTire()">Add Tire</button>
+                    <button type="button" class="btn" onclick="closeAddTireModal()" style="margin-left: 10px;">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
